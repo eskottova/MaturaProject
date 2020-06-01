@@ -64,12 +64,32 @@ class Line
         }
 };
 
+
+class OutEvent
+{
+    private:
+        int t, id;
+        char type;
+        vector<int> other;
+    public:
+        void print()
+        {
+            cout << this->t << " " << this->type << " " << this->id;
+            for(int el : this->other)
+            {
+                cout << " " << el;
+            }
+            cout << '\n';
+        }
+};
+
 int event_n, change_time, train_passengers, station_passengers, station_n, passenger_n, line_n, train_n;
 
 vector<Station> stations;
 vector<Passenger> passengers;
 vector<Line> lines;
 vector<Train> trains;
+vector<OutEvent> out_events;
 
 void readInput()
 {
@@ -113,7 +133,16 @@ void readInput()
     }
 }
 
+void printOutput()
+{
+    for(auto event : out_events)
+    {
+        event.print();
+    }
+}
+
 signed main()
 {
     readInput();
+    printOutput();
 }

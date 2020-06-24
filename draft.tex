@@ -1,0 +1,152 @@
+\documentclass[10pt]{report}
+\usepackage[usenames]{color}
+\usepackage{amssymb} 
+\usepackage{amsmath} 
+\usepackage[utf8]{inputenc}
+\usepackage{multirow}
+
+\title{MA Draft}
+\author{Ema Skottova}
+
+\begin{document}
+\maketitle
+
+\tableofcontents
+
+\chapter{Introduction}
+In the first round of the Swiss Olympiad in Informatics there is always a creativity task, which does not have an optimal solution, but there are many approaches to reach an acceptable solution. In the fall of 2019, the task was to optimize a train network. During the first round I only submitted a very simple solution, which worked for a special case of small networks. The goal of this paper is to compare the ability of two optimization methods to solve this task. The chosen methods are simulated annealing and a genetic algorithm, both of which will be explained in the theory chapter.
+
+\chapter{Complete Problem Statement}
+
+As already stated in the introduction, the goal of this paper is to compare two optimization methods. In order to do this, one first needs a problem to optimize. For this paper, the creativity task SOIway of the first round of the Swiss Olympiad in Informatics 2019/2020 was chosen. The task is as follows:
+
+The program is given constants and a list of events, then it has to print actions.
+
+Constants:
+\begin{itemize}
+    \item minimal amount of time to change a line
+    \item maximal number of passengers allowed on a train
+    \item maximal number of passengers allowed at a station
+\end{itemize}
+
+
+Events (with their time of appearance):
+\begin{itemize}
+    \item Appearance of a station (coordinates of the station and the type of the station)
+    \item Appearance of a passenger (starting station and type of end station)
+    \item Additional train
+    \item Additional train line
+\end{itemize}
+
+Actions:
+\begin{itemize}
+    \item Setting/Changing a line (stations that the line will cover)
+    \item Adding a train to a line (line and the station where it starts)
+    \item Boarding a passenger
+    \item Unboarding a passenger
+\end{itemize}
+
+The program has failed if it produces invalid output. If the program does not fail, the process ends if
+(a)	All passengers have arrived at their final destination
+or
+(b)	There are more passengers than allowed at a station
+
+
+\chapter{Theoretical Background}
+
+\section{Simulated Annealing}
+The general idea is that at the beginning, the program will take larger steps in testing sets of parameter values and with time its step size decreases, and it only looks at options closer to options that were already good.
+
+\section{Genetic Algorithms}
+A genetic algorithm starts with a few ‘individuals’ (sets of parameter values) and the individuals multiply with ‘mutations’ (changes in parameter values) and after a few mutations only the best few survive. This process continues until a sufficiently good answer is found.
+
+
+\chapter{Methods}
+
+A general solution, which depends on a set of parameters, is written first. Then, the two optimization methods will be used to find the best set of parameters.
+
+
+\section{General Solution}
+The general solution goes through each event and action and evaluates whether it should make an action. An action will be taken if the sum of the parameters which influence it is above 100.
+
+\subsection{Parameters}
+
+\subsubsection{Picking up passenger}
+\begin{itemize}
+    \item Distance (time, stops, line changes in current train)
+    \item Number of passengers on the train
+    \item Number of passengers at the station
+    \item Network capacity
+    \item These values for the following train(s)/passenger(s)/station(s)
+\end{itemize}
+
+\subsubsection{Letting passenger leave}
+\begin{itemize}
+    \item Correct station
+    \item Number of passengers at the station
+    \item Number of passengers on the train
+    \item Distance (time, stops, line changes) of current line
+    \item Distance (time, stops, line changes) of connecting lines
+    \item Capacity of current line
+    \item Capacity of neighboring lines
+    \item Values for other trains/stations/passengers
+\end{itemize}
+
+\subsubsection{Changing line for train}
+\begin{itemize}
+    \item Passengers per train on each line
+\end{itemize}
+
+\subsubsection{Changing train line (time)}
+\begin{itemize}
+    \item Balance in current network
+    \item Important trains on current line
+\end{itemize}
+
+\subsubsection{New train line (route)}
+\begin{itemize}
+    \item Frequency of visits
+    \item Number of passengers starting
+\end{itemize}
+
+\section{Evaluation}
+The two methods will be compared the following way:
+
+\begin{tabular}{|c|c|c|c|c|}
+    \hline
+    \multicolumn{2}{|c|}{Method 1} & \multicolumn{2}{|c|}{Method 2} & \multirow{2}{*}{Result}                         \\ \hline
+    Reason for end                 & Steps                          & Reason for end          & Steps &               \\ \hline
+    (b)                            & $x$                            & (b)                     & $< x$ & Method 1 wins \\ \hline
+    (b)                            & $x$                            & (b)                     & $x$   & Draw          \\ \hline
+    (b)                            & $x$                            & (a)                     & $y$   & Method 2 wins \\ \hline
+    (a)                            & $x$                            & (a)                     & $>x$  & Method 1 wins \\ \hline
+    (a)                            & $x$                            & (a)                     & $x$   & Draw          \\ \hline
+\end{tabular}
+
+
+\chapter{Process}
+\section{Input Generator}
+At first a program which generates random test data was written. This program’s parameters were set to match a test data sample from the original competition.
+
+\section{Input/Output}
+Next, the first part of the main program was created. This part is responsible for reading the input and printing the output.
+
+\section{General Solution V1}
+After this, the general program which calculates a solution will be written. This version will only consider very simple parameters, which can be calculated easily. The goal of this version is to have a running program so that tests can be done on the program. In particular, this should make it possible to test first versions of the two methods.
+
+\section{Simulated Annealing}
+This algorithm will be implemented and tested using the first version of the general solution.
+
+\section{General Solution V2}
+After first tests with simulated annealing, improvements will be added to the general solution.
+
+\section{Genetic Algorithm}
+This algorithm will be implemented and tested. First comparisons between the algorithms can be made.
+
+\section{Improvements General Solution}
+In subsequent versions, missing parameters will be added and other necessary improvements will be made.
+
+\chapter{Results}
+
+
+\end{document}

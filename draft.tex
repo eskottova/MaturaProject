@@ -146,6 +146,16 @@ This algorithm will be implemented and tested. First comparisons between the alg
 \section{Improvements General Solution}
 In subsequent versions, missing parameters will be added and other necessary improvements will be made.
 
+\chapter{Issues}
+\section{General Solution}
+While implementing the general solution, larger issues arose for the first time. The main problem was that it is difficult to test parts of the general solution before a primitive version of it is running. This lead to over 400 lines of code being written, where the only testing was compiling it a few times. 
+
+\subsection{Circular References}
+Due to some circular references the program had to be restructured a few times. At first, solving some of the references worked by just changing the order of the definition of some classes. Later, it became necessary to make a forward declaration of all the classes. This wasn't enough either, and after a lot of googling I found out how to do a so-called inline definition, which means one can write a method outside the class. This enabled first defining the classes and their methods and only later actually writing out the methods.
+
+\subsection{Class hierarchy, Pointers and Priority Sorting}
+In order to fix an issue with calling methods of derived classes I was forced to use pointers (which I hadn't done very often before that). With this I ran into a new issue as I needed to sort the events the pointers were pointing at by time.
+
 \chapter{Results}
 
 

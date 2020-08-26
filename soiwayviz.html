@@ -1,0 +1,44 @@
+<!-- HTML File for visualization, provided by the SOI --> 
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>SOIway</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="soiwayviz.css">
+<script type="text/javascript" src="soiwayviz.js"></script>
+<script type="text/javascript" src="debug_input.js"></script>
+</head>
+<body>
+  <div id="header">
+    <div>
+      <form id="dataload" action="" onsubmit="return soiwayviz_loadData(event)">
+        <div><label>Input <input type="file" id="soiwayviz_input_file"/></label></div>
+        <div><label>Output <input type="file" id="soiwayviz_output_file"/></label></div>
+        <div><button type="submit">Load</button></div>
+      </form>
+    </div>
+    <div id="vizconfig">
+      <div>
+        <label>Frame: <input id="soiwayviz_nowinput" type="number" min="0" onchange="soiwayviz_setnow(event)" value="0"/></label>
+      </div>
+      <div>
+        <label>Speed: <input id="soiwayviz_speedinput" type="number" min="0" step="0.1" onchange="soiwayviz_setspeed(event)" value="10"/></label>
+      </div>
+    </div>
+    <div>
+      <button onclick="togglePlay()">Play/Pause</button>
+    </div>
+    <div>
+      <button onclick="soiwayviz_fullscreen()">Fullscreen</button>
+    </div>
+  </div>
+  <div id="soiwayviz_vizwrapper">
+    <canvas id="soiwayviz_canvas" width="100" height="100"></canvas>
+  </div>
+  <script type="text/javascript">
+    soiwayviz_ready();
+  </script>
+</body>
+</html>

@@ -30,6 +30,9 @@ auto compare = [](auto const& lhs, auto const& rhs)
 };
 
 int event_n, change_time, train_passengers, station_passengers, station_n, passenger_n, line_n, train_n;
+Line* last_line = nullptr;
+priority_queue<Event*, vector<Event*>, decltype(compare)> input_events(compare);
+int last_action = 0;
 
 vector<Station*> stations;
 vector<Station*> all_stations;
@@ -89,10 +92,7 @@ class Train
         void set_station(Station* station);
         pair<int, Station*> find_next_station();
         int get_id(){return this->id;}
-        void add_pass(Passenger* p)
-        {
-            this->passengers.push_back(p);
-        }
+        void add_pass(Passenger* p);
 };
 
 class Line
@@ -109,6 +109,7 @@ class Line
         void set_stations(vector<Station*>, int time, vector<OutEvent*>& out_events);
         void add_trains(int time, priority_queue<Event*, vector<Event*>, decltype(compare)>& events, vector<OutEvent*>& out_events);
         int get_id(){return this->id;}
+        Station* get_start(){return this->stations[0];}
 };
 
 class Event
@@ -118,7 +119,6 @@ class Event
         int priority;
     public:
         virtual bool run(priority_queue<Event*, vector<Event*>, decltype(compare)>& events, vector<OutEvent*>& out_events);
-        virtual bool operator<(Event const& e) const;
         virtual int get_time(){return this->time;}
         virtual int get_prio(){return this->priority;}
         virtual ~Event(){};
@@ -241,8 +241,6 @@ class OutEvent
         }
 };
 
-priority_queue<Event*, vector<Event*>, decltype(compare)> input_events(compare);
-
 Station::Station(int id, int time, int type, int x, int y)
 {
     this->id = id;
@@ -262,7 +260,7 @@ void Station::board(Train* train, int time, vector<OutEvent*>& out_events)
             train->add_pass(*it);
             out_events.push_back(new OutEvent(time, (*it)->get_id(), 'e', {train->get_id()}));
             it = passengers.erase(it) - 1;
-            
+            last_action = time;
         }
     }
 }
@@ -277,18 +275,6 @@ int Station::add_line(Line* line)
 {
     this->lines.push_back(line);
     return this->id;
-}
-
-void Train::unboard(Station* station, int time, vector<OutEvent*>& out_events)
-{
-    for(auto it = passengers.begin(); it != passengers.end(); it ++)
-    {
-        if((*it)->check_exit(station))
-        {
-            out_events.push_back(new OutEvent(time, (*it)->get_id(), 'a', {station->get_id()}));
-            it = passengers.erase(it) - 1;
-        }
-    }
 }
 
 Passenger::Passenger(int id, int time, int start_station_id, int end_station_type)
@@ -322,6 +308,24 @@ Train::Train(int id, int time)
 {
     this->id = id;
     this->time = time;
+}
+
+void Train::unboard(Station* station, int time, vector<OutEvent*>& out_events)
+{
+    for(auto it = passengers.begin(); it != passengers.end(); it ++)
+    {
+        if((*it)->check_exit(station))
+        {
+            out_events.push_back(new OutEvent(time, (*it)->get_id(), 'a', {station->get_id()}));
+            it = passengers.erase(it) - 1;
+            last_action = time;
+        }
+    }
+}
+
+void Train::add_pass(Passenger* p)
+{
+    this->passengers.push_back(p);
 }
 
 int Train::get_cap()
@@ -397,18 +401,6 @@ bool Event::run(priority_queue<Event*, vector<Event*>, decltype(compare)>& event
     return false;
 }
 
-bool Event::operator<(Event const& e) const
-{
-    if(this->time == e.time)
-    {
-        return this->priority < e.priority;
-    }
-    else
-    {
-        return this->time < e.time;
-    }
-}
-
 TrainArrival::TrainArrival(int time, Train* train, Station* station)
 {
     this->time = time;
@@ -433,6 +425,7 @@ NewStation::NewStation(Station* station, int time)
 
 bool NewStation::run(priority_queue<Event*, vector<Event*>, decltype(compare)>& events, vector<OutEvent*>& out_events)
 {
+    last_action = this->time;
     new_stations.push_back(station);
     stations.push_back(station);
     return false;
@@ -448,6 +441,7 @@ NewPassenger::NewPassenger(Passenger* passenger, Station* station, int time)
 
 bool NewPassenger::run(priority_queue<Event*, vector<Event*>, decltype(compare)>& events, vector<OutEvent*>& out_events)
 {
+    last_action = this->time;
     return this->station->add_passenger(this->passenger);
 }
 
@@ -461,6 +455,7 @@ NewLine::NewLine(Line* line, int time)
 
 bool NewLine::run(priority_queue<Event*, vector<Event*>, decltype(compare)>& events, vector<OutEvent*>& out_events)
 {
+    last_action = this->time;
     vector<Station*> lstations;
     if(new_stations.size() == stations.size()) lstations = new_stations;
     else
@@ -475,8 +470,13 @@ bool NewLine::run(priority_queue<Event*, vector<Event*>, decltype(compare)>& eve
     
     this->line->set_stations(lstations, this->time, out_events);
     new_stations.clear();
-    this->line->add_trains(this->time, events, out_events);
-    new_trains.clear();
+
+    if(last_line == nullptr) 
+    {
+        this->line->add_trains(this->time, events, out_events);
+        new_trains.clear();
+    }
+    last_line = this->line;
 
     return false;
 }
@@ -490,7 +490,9 @@ NewTrain::NewTrain(Train* train, int time)
 
 bool NewTrain::run(priority_queue<Event*, vector<Event*>, decltype(compare)>& events, vector<OutEvent*>& out_events)
 {
-    new_trains.push_back(this->train);
+    last_action = this->time;
+    if(last_line == nullptr) new_trains.push_back(this->train);
+    else train->set_line(last_line, last_line->get_start(), this->time, events, out_events);
     return false;
 }
 
@@ -580,10 +582,11 @@ Solution computeSolution(/*const Parameters& p*/)
     priority_queue<Event*, vector<Event*>, decltype(compare)> events = input_events;
     bool overfilled = false;
     int t = 0;
-    while(!overfilled && !events.empty())
+    while(!overfilled && !events.empty() && t < last_action + 2000)
     {   
         Event* e = events.top();
         events.pop();
+        t = e->get_time();
         overfilled = e->run(events, s.out_events);
     }
     return s;

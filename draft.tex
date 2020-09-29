@@ -5,6 +5,8 @@
 \usepackage[utf8]{inputenc}
 \usepackage{listings}
 \usepackage{multirow}
+\usepackage{biblatex}
+\addbibresource{bibliography.bib}
 
 \title{MA Draft}
 \author{Ema Skottova, M21a}
@@ -24,15 +26,22 @@ In the first round of the Swiss Olympiad in Informatics there is always a creati
 In an optimization problem the objective is to find the best (optimal) solution. Example problems are finding the minimum/maximum of a mathematical function, the shortest train connection between two cities, a way to maximize the profit of a company, or the optimal shape for a vehicle. Mathematically a solution can be modelled using a set of parameters, which clearly define a solution. A value function is needed to compare different solutions. In applied mathematics or outside of mathematics, the term often refers to problems where it is difficult to find the optimal solution. Therefore, instead of looking for the optimal solution,the objective becomes finding a sufficiently good one. In this project that type of problem is considered.
 
 \section{Optimization Methods}
-An optimization method is a procedure to find the optimal (or a sufficiently good) solution. 
+An optimization method is a procedure to find the optimal (or a sufficiently good) solution.
 
-For this project the  methods simulated annealing and genetic algorithms were chosen. They will be compared in their ability to optimize a train network. 
+\subsection{Brute-Force}
+One method which is sometimes used for optimization problems is called brute-force. When brute-force is used, all possible solutions are computed and the best one is chosen in the end. The main issue with this method is that it is often too slow as it has to compute too many similar things many times.
+
+\subsection{Greedy}
+A greedy algorithm always takes the best local option. Similar to real world problems, short term thinking often does not lead to a very good long term solution. Greedy algorithms often find a solution where no similar solution is better. The issue with this approach is that it often only looks at a small number of similar solutions rather than many different ones.
+
+\subsection{Properties of Better Methods}
+Neither brute-force nor a greedy algorithm seem to be very useful for solving problems with too many possible solutions. Brute-force would take too long and a greedy algorithm would just find some solution, without considering most options. Nevertheless, both approaches have some strenghts. The goal of a good optimization method is to compare the strenghts of both methods while avoiding their weaknesses as much as possible. In practice this means using the fact that some solutions are better than similar ones just like a greedy algorithm, without computing all the bad ones like it is done with brute-force. Similarly, a diverse range of different solutions should be considered, just like it is done with brute force.
 
 \subsection{Simulated Annealing}
-The general idea is that at the beginning, the program will take larger steps in testing sets of parameter values and with time its step size decreases, and it only looks at options closer to options that were already good. %TODO: Add pseudocode
+Simulated annealing is the first of the two methods chosen for this project. The general idea is that at the beginning, the program will take larger steps in testing sets of parameter values and with time its step size decreases, and it only looks at options closer to options that were already good. \cite{SA1} %TODO: Add pseudocode
 
 \subsection{Genetic Algorithms}
-A genetic algorithm starts with a few ‘individuals’ (sets of parameter values) and the individuals multiply with ‘mutations’ (changes in parameter values) and after a few mutations only the best few survive. This process continues until a sufficiently good answer is found. %TODO: Add pseudocode
+A genetic algorithm starts with a few ‘individuals’ (sets of parameter values) and the individuals multiply with ‘mutations’ \cite{genalg1} changes in parameter values) and after a few mutations only the best few survive. This process continues until a sufficiently good answer is found. \cite{genalg2}  %TODO: Add pseudocode
 
 
 \chapter{Complete Problem Statement}
@@ -212,8 +221,11 @@ The clear objects in the problem of course also get their own classes. All these
 \subsection{Optimization methods}
 The optimization methods have been implemented as described in the theory chapter, where their pseudocode can be found.
 
+\section{New Line and Line Changes}
+Creating a new line or changing a line comes with many challenges. Firstly, one has to decide on the stations which the new line should cover. After that the order in which the stations on the line are visited has to be determined. In many cases, it makes sense to just connect the stations in an order which minimizes the total time it takes for a train to make a round on the line. This is an optimization problem of its own.
 
 \chapter{Results}
 
+\printbibliography
 
 \end{document}

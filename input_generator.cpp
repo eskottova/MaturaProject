@@ -8,10 +8,10 @@ class Input
 {
     private:
         const int station_type_n = 20;
-        const int max_coordinate_d = 100;
+        const int max_coordinate_d = 300;
         int cur_station_types = 0;
         // station, passenger, line, train
-        const vector<int> event_p = {120, 3890, 20, 60}; // probabilities for each event ({120, 3890, 11, 33} in input file)
+        const vector<int> event_p = {120, 3890, 11, 33}; // probabilities for each event ({120, 3890, 11, 33} in input file)
         vector<int> event_n = {0, 0, 0, 0}; // number of times an event has appeared
         vector<int> event_c = {0, 0, 0, 0, 0}; //cutoffs for the events
         vector<pair<int, int>> station_coordinates;
@@ -88,8 +88,8 @@ class Input
                         bool not_new = true; //used to make sure the coordinates of stations are unique
                         while(not_new)
                         {
-                            x = uni(rng) % 2 * max_coordinate_d - max_coordinate_d;
-                            y = uni(rng) % 2 * max_coordinate_d - max_coordinate_d;
+                            x = uni(rng) % (2 * max_coordinate_d) - max_coordinate_d;
+                            y = uni(rng) % (2 * max_coordinate_d) - max_coordinate_d;
                             if(station_set.size() == 0) 
                             {
                                 not_new = false;

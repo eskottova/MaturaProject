@@ -2,6 +2,7 @@
 #include <vector>
 #include <queue>
 #include <cmath>
+#include <random>
 #define int int64_t 
 using namespace std;
 
@@ -18,15 +19,33 @@ class NewLine;
 class NewTrain;
 class TrainDeparture;
 
+class Optimization;
+class SimulatedAnnealing;
+class GeneticAlgorithm;
+
 class Solution;
 class Parameters;
 
 class OutEvent;
 
+// random generator
+mt19937 rng(10007);
+uniform_int_distribution<int> uni(0, 1e12);
+
+int randint(int mi, int ma)
+{
+    return uni(rng) % (ma - mi) + mi;
+}
+
 auto compare = [](auto const& lhs, auto const& rhs)
 {
     if(lhs->get_time() == rhs->get_time()) return lhs->get_prio() > rhs->get_prio();
     else return lhs->get_time() > rhs->get_time();
+};
+
+auto compare_solptr = [](auto const& lhs, auto const& rhs)
+{
+    return lhs->val < rhs->val;
 };
 
 int event_n, change_time, train_passengers, station_passengers, station_n, passenger_n, line_n, train_n;
@@ -47,10 +66,10 @@ class Station
     private:
         int id;
         int time;
+        int x, y;
         vector<Line*> lines;
         vector<Passenger*> passengers;
     public:
-        int x, y;
         int type;
         Station(int id, int time, int type, int x, int y);
         bool add_passenger(Passenger* passenger);
@@ -58,6 +77,8 @@ class Station
         int add_line(Line*);
         int get_cap();
         int get_id(){return this->id;}
+        pair<int, int> get_coordinates(){return {this->x, this->y};}
+        void reset();
 };
 
 class Passenger
@@ -75,6 +96,7 @@ class Passenger
         bool check_exit(Parameters* para, Station* stat);
         bool check_boarding(Parameters* para, Train* train);
         int get_id(){return this->id;}
+        void reset();
 };
 
 class Train
@@ -95,6 +117,7 @@ class Train
         int get_id(){return this->id;}
         void add_pass(Passenger* p);
         bool line_contains(int station_type);
+        void reset();
 };
 
 class Line
@@ -113,6 +136,7 @@ class Line
         int get_id(){return this->id;}
         Station* get_start(){return this->stations[0];}
         bool contains(int station_type);
+        void reset();
 };
 
 class Event
@@ -185,45 +209,65 @@ class TrainDeparture : public Event
         virtual bool run(Parameters* para, priority_queue<Event*, vector<Event*>, decltype(compare)>& events, vector<OutEvent*>& out_events);
 };
 
+class SimulatedAnnealing
+{
+    private:
+        Solution* bests;
+        int init_temp = 100;
+        int it_per_temp = 20;
+        int alpha = 10;
+    public:
+        void optimize_solution();
+        Solution* get_best() {return bests;}
+};
+
+class GeneticAlgorithm
+{
+    private:
+        Solution* bests;
+        vector<Solution*> population;
+        int population_size = 10;
+        int num_gens = 20;
+        int num_replaced = 3;
+        int num_offspring = 10;
+        int num_mutations = 5;
+    public:
+        void optimize_solution();
+        vector<pair<Parameters*, Parameters*>> selection();
+        vector<Parameters*> crossing(vector<pair<Parameters*, Parameters*>> parents);
+        vector<Parameters*> mutation(vector<Parameters*> offspring);
+        void compute_offspring(vector<Parameters*> offspring);
+        Solution* get_best() {return bests;}
+
+};
+
+
 class Solution
 {
     private:
-        Parameters* para;
-        bool finished = false;
+        int pass_finished = 0;
         int steps = 0;
-        
-        bool operator>(Solution& s)
-        {
-            if(this->finished == s.finished)
-            {
-                if(this->finished == true)
-                {
-                    return this->steps < s.steps;
-                }
-                else
-                {
-                    return this->steps > s.steps;
-                }
-                
-            }
-            else
-            {
-                return this->finished == true;
-            }
-        }
     public:
+        Parameters* para;
+        int val;
         vector<OutEvent*> out_events;
         Solution(Parameters* para);
+        Parameters* neighbor();
         void print();
+        bool operator<(Solution const& s) {return this->val < s.val;}
 };
 
 class Parameters
 {
+    private:
+        vector<int> maxpars = {100, 100};
+        vector<int> minpars = {0, 0};
+        int numpars = 2;
     public:
-        // boarding passenger
-        int pass_at_station;
-        int pass_on_train;
-
+        Parameters();
+        vector<int> pars;
+        vector<int> random_pars();
+        void random_par(int i);
 };
 
 class OutEvent
@@ -234,6 +278,7 @@ class OutEvent
         vector<int> other;
     public:
         OutEvent(int t, int id, char type, vector<int> other);
+        char get_type(){return this->type;}
         void print()
         {
             cout << this->t << " " << this->type << " " << this->id;
@@ -252,7 +297,12 @@ Station::Station(int id, int time, int type, int x, int y)
     this->type = type;
     this->x = x;
     this->y = y;
+}
 
+void Station::reset()
+{
+    this->lines.clear();
+    this->passengers.clear();
 }
         
 void Station::board(Parameters* para, Train* train, int time, vector<OutEvent*>& out_events)
@@ -295,6 +345,14 @@ Passenger::Passenger(int id, int time, int start_station_id, int end_station_typ
     this->station = all_stations[start_station_id];
 }
 
+void Passenger::reset()
+{
+    this->station = all_stations[this->start_station_id];
+    this->train = nullptr;
+    this->line = nullptr;
+}
+
+
 bool Passenger::check_exit(Parameters* para, Station* stat)
 {
     if(stat->type == end_station_type) 
@@ -308,7 +366,7 @@ bool Passenger::check_exit(Parameters* para, Station* stat)
 
 bool Passenger::check_boarding(Parameters* para, Train* tra)
 {
-    if((tra->line_contains(this->end_station_type) && tra->get_cap() > 0) && para->pass_on_train * this->station->get_cap() < para->pass_at_station * tra->get_cap())
+    if((tra->line_contains(this->end_station_type) && tra->get_cap() > 0) && para->pars[0] * this->station->get_cap() < para->pars[1] * tra->get_cap())
     {
         this->train = tra;
         this->station = nullptr;
@@ -321,6 +379,13 @@ Train::Train(int id, int time)
 {
     this->id = id;
     this->time = time;
+}
+
+void Train::reset()
+{
+    this->passengers.clear();
+    this->line = nullptr;
+    this->station = nullptr;
 }
 
 void Train::unboard(Parameters* para, Station* station, int time, vector<OutEvent*>& out_events)
@@ -373,9 +438,13 @@ Line::Line(int id, int time)
 {
     this->id = id;
     this->time = time;
-
 }
 
+void Line::reset()
+{
+    this->stations.clear();
+    this->trains.clear();
+}
 
 pair<int, Station*> Line::next_station(Station* s0)
 {
@@ -390,11 +459,72 @@ pair<int, Station*> Line::next_station(Station* s0)
 
 int Line::dist(Station* s1, Station* s2)
 {
-    return ceil(sqrtf(float((s2->x - s1->x) * (s2->x - s1->x) + (s2->y - s1->y) * (s2->y - s1->y))) / 12);
+    pair<int, int> c1 = s1->get_coordinates();
+    pair<int, int> c2 = s2->get_coordinates();
+    return ceil(sqrtf(float((c2.first - c1.first) * (c2.first - c1.first) + (c2.second - c1.second) * (c2.second - c1.second))) / 12);
 }
+
+
+// dif, best_swap and find_order were mostly copied from the old program
+
+int dif(int x1, int y1, int x2, int y2, int x3, int y3, int x4, int y4)
+{
+    int dist12 = sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
+    int dist34 = sqrt((x3 - x4) * (x3 - x4) + (y3 - y4) * (y3 - y4));
+    int dist13 = sqrt((x1 - x3) * (x1 - x3) + (y1 - y3) * (y1 - y3));
+    int dist24 = sqrt((x2 - x4) * (x2 - x4) + (y2 - y4) * (y2 - y4));
+    return dist13 + dist24 - dist12 - dist34;
+}
+
+void best_swap(vector<Station*>& line)
+{
+    int ls = line.size();
+    int besti = -1, bestj = -1, bestdif = 0;
+    for(int i = 0; i < ls; i ++)
+    {
+        for(int j = 0; j < i; j ++)
+        { // 1-2 3-4 -> 1-3 2-4
+            pair<int, int> p1 = line[(j - 1 + ls) % ls]->get_coordinates();
+            pair<int, int> p2 = line[j]->get_coordinates();
+            pair<int, int> p3 = line[i]->get_coordinates();
+            pair<int, int> p4 = line[(i + 1) % ls]->get_coordinates();
+            if(j == 0 && i == ls - 1)
+            {
+                continue;
+            }
+            int curdif = dif(p1.first, p1.second, p2.first, p2.second, p3.first, p3.second, p4.first, p4.second);
+            if(curdif < bestdif)
+            {
+                bestdif = curdif;
+                besti = i;
+                bestj = j;
+            }
+        }
+    }
+    if(besti >= 0)
+    {
+        vector<Station*> line2 = line;
+        for(int i = bestj; i <= besti; i ++)
+        {
+            line[i] = line2[besti - i + bestj];
+        }
+    }
+}
+
+vector<Station*> find_order(vector<Station*> stations)
+{
+    vector<Station*> ordered = stations;
+    for(int i = 0; i < 300; i ++)
+    {
+        best_swap(ordered);
+    }
+    return ordered;
+}
+
 
 void Line::set_stations(vector<Station*> stations, int time, vector<OutEvent*>& out_events)
 {
+    stations = find_order(stations);
     this->stations = stations;
     vector<int> other;
     other.push_back(stations.size());
@@ -451,6 +581,7 @@ NewStation::NewStation(Station* station, int time)
 
 bool NewStation::run(Parameters* para, priority_queue<Event*, vector<Event*>, decltype(compare)>& events, vector<OutEvent*>& out_events)
 {
+    this->station->reset();
     last_action = this->time;
     new_stations.push_back(station);
     stations.push_back(station);
@@ -467,6 +598,7 @@ NewPassenger::NewPassenger(Passenger* passenger, Station* station, int time)
 
 bool NewPassenger::run(Parameters* para, priority_queue<Event*, vector<Event*>, decltype(compare)>& events, vector<OutEvent*>& out_events)
 {
+    this->passenger->reset();
     last_action = this->time;
     return this->station->add_passenger(this->passenger);
 }
@@ -481,6 +613,7 @@ NewLine::NewLine(Line* line, int time)
 
 bool NewLine::run(Parameters* para, priority_queue<Event*, vector<Event*>, decltype(compare)>& events, vector<OutEvent*>& out_events)
 {
+    this->line->reset();
     last_action = this->time;
     vector<Station*> lstations;
     if(new_stations.size() == stations.size()) lstations = new_stations;
@@ -523,6 +656,7 @@ NewTrain::NewTrain(Train* train, int time)
 
 bool NewTrain::run(Parameters* para, priority_queue<Event*, vector<Event*>, decltype(compare)>& events, vector<OutEvent*>& out_events)
 {
+    this->train->reset();
     last_action = this->time;
     if(last_line == nullptr) new_trains.push_back(this->train);
     else train->set_line(last_line, last_line->get_start(), this->time, events, out_events);
@@ -549,19 +683,156 @@ bool TrainDeparture::run(Parameters* para, priority_queue<Event*, vector<Event*>
     return false;
 }
 
+void SimulatedAnnealing::optimize_solution()
+{
+    Parameters* para = new Parameters();
+    Solution* cursol = new Solution(para);
+    this->bests = cursol;
+    int temp = this->init_temp;
+    while(temp > 0)
+    {
+        for(int i = 0; i < this->it_per_temp; i ++)
+        {
+            Solution* snew = new Solution(cursol->neighbor());
+            if(snew->val > cursol->val || 1000 * exp((float) (snew->val - cursol->val) / temp) > randint(0, 1000))
+            {
+                cursol = snew;
+            }
+        }
+        temp -= this->alpha;
+        if(cursol->val > bests->val) this->bests = cursol;
+    }
+}
+
+vector<pair<Parameters*, Parameters*>> GeneticAlgorithm::selection()
+{
+    int valsum = 0;
+    for(auto individual : this->population) valsum += individual->val;
+    
+    vector<int> parents(2 * this->num_offspring);
+    for(int i = 0; i < 2 * this->num_offspring; i ++) parents[i] = randint(0, valsum);
+
+    sort(parents.begin(), parents.end());
+
+    vector<pair<Parameters*, Parameters*>> parent_pars(num_offspring);
+
+    int i = 0;
+    int j = 0;
+    int curvalsum = 0;
+    while(i < population_size)
+    {
+        curvalsum += population[i]->val;
+        while(j < 2 * this->num_offspring && curvalsum > parents[j])
+        {
+            if(j % 2 == 0) parent_pars[j / 2].first = population[i]->para;
+            else parent_pars[j / 2].second = population[i]->para;
+            j ++;
+        }
+        i ++;
+    }
+    
+    return parent_pars;
+}
+
+vector<Parameters*> GeneticAlgorithm::crossing(vector<pair<Parameters*, Parameters*>> parent_pars)
+{
+    vector<Parameters*> offspring_pars(num_offspring);
+
+    int chrom_size = parent_pars[0].first->pars.size();
+
+    for(int i = 0; i < num_offspring; i ++)
+    {
+        int cutoff = randint(0, chrom_size);
+
+        offspring_pars[i] = new Parameters;
+
+        for(int gene = 0; gene < chrom_size; gene ++)
+        {
+            if(gene < cutoff) offspring_pars[i]->pars[gene] = parent_pars[i].first->pars[gene];
+            else offspring_pars[i]->pars[gene] = parent_pars[i].second->pars[gene];
+        }
+    }
+    return offspring_pars;
+}
+
+vector<Parameters*> GeneticAlgorithm::mutation(vector<Parameters*> offspring_pars)
+{
+    int chrom_size = offspring_pars[0]->pars.size();
+    for(int i = 0; i < num_mutations; i ++)
+    {
+        offspring_pars[randint(0, this->num_offspring)]->random_par(randint(0, chrom_size));
+    }
+    return offspring_pars;
+}
+
+void GeneticAlgorithm::compute_offspring(vector<Parameters*> offspring_pars)
+{
+    vector<Solution*> offspring(num_offspring);
+    for(int i = 0; i < num_offspring; i ++) offspring[i] = new Solution(offspring_pars[i]);
+
+    sort(offspring.begin(), offspring.end(), compare_solptr);
+    sort(this->population.begin(), this->population.end(), compare_solptr);
+
+    int i = 0;
+    while(i < num_replaced && population[i] < offspring[this->num_offspring - 1 - i])
+    {
+        population[i] = offspring[this->num_offspring - i - 1];
+    }
+}
+
+void GeneticAlgorithm::optimize_solution()
+{
+    //create population
+    this->population.resize(population_size);
+    for(int i = 0; i < population_size; i ++)
+    {
+        Parameters* para = new Parameters();
+        this->population[i] = new Solution(para);
+    }
+
+    // compute all generations
+    int generation = 0;
+    while(generation < this->num_gens)
+    {
+        this->compute_offspring(this->mutation(this->crossing(this->selection())));
+        generation ++;
+    }
+
+    //set best solution*/
+    this->bests = this->population[0];
+    for(auto individual : population) if(individual->val > bests->val) bests = individual;
+}
+
 Solution::Solution(Parameters* para)
 {
+    cerr << "new solution " << para->pars[0] << " " << para->pars[1] << "\n";
+    new_stations.clear();
+    stations.clear();
     this->para = para;
     priority_queue<Event*, vector<Event*>, decltype(compare)> events = input_events;
     bool overfilled = false;
-    int t = 0;
-    while(!overfilled && !events.empty() && t < last_action + 2000)
+    this->steps = 0;
+    while(!overfilled && !events.empty() && this->steps < last_action + 2000)
     {   
         Event* e = events.top();
         events.pop();
-        t = e->get_time();
+        this->steps = e->get_time();
         overfilled = e->run(para, events, this->out_events);
     }
+
+    this->pass_finished = 0;
+    for(auto oe : this->out_events) if(oe->get_type() == 'a') pass_finished ++;
+
+    this->val = this->pass_finished * 10000 - this->steps;
+}
+
+Parameters* Solution::neighbor()
+{
+    Parameters* neighbor = new Parameters;
+    for(int i = 0; i < this->para->pars.size(); i ++) neighbor->pars[i] = this->para->pars[i];
+    int changep = randint(0, neighbor->pars.size());
+    neighbor->random_par(changep);
+    return neighbor;
 }
 
 void Solution::print()
@@ -570,6 +841,24 @@ void Solution::print()
     {
         event->print();
     }
+}
+
+Parameters::Parameters()
+{
+    this->pars.resize(this->numpars);
+    this->pars = random_pars();
+}
+
+vector<int> Parameters::random_pars()
+{
+    vector<int> p(this->pars.size());
+    for(int i = 0; i < this->pars.size(); i ++) p[i] = randint(this->minpars[i], this->maxpars[i]);
+    return p;
+}
+
+void Parameters::random_par(int i)
+{
+    this->pars[i] = randint(this->minpars[i], this->maxpars[i]);
 }
 
 OutEvent::OutEvent(int t, int id, char type, vector<int> other)
@@ -623,60 +912,18 @@ void readInput()
     }
 }
 
-Solution computeSolution(Parameters* para)
-{
-    Solution s(para);
-
-    return s;
-
-}
-//TODO: return value numerically
-/*
-
-int temperature(int k, int kmax);
-Solution neighbor(Solution s);
-float P(int es, int esnew, int t)
-{
-    if(esnew < es) return 1;
-    else return (e ^ ((esnew - es) / T));
-}
-
- */
-
-Solution simulatedAnnealing()
-{
-    Parameters* para = new Parameters;
-    para->pass_at_station = 30;
-    para->pass_on_train = 5;
-    /*
-    Solution s = computeSolution(para);
-    int kmax = 200;
-    for(int k = 0; k < kmax; k ++)
-    {
-        int t = temperature((k+1), kmax);
-        Solution snew = neighbor(s);
-        if( P(E(s), E(snew), t) >= random(0, 1))
-        {
-            s = snew;
-        }
-    }
-    Output: the final state s
-
-     */
-    return computeSolution(para);
-}
-/* 
-Solution geneticAlgorithm()
-{
-    Parameters para;
-    return computeSolution(para);
-}*/
 
 signed main()
 {
     readInput();
-    Solution s1 = simulatedAnnealing();
-    //Solution s2 = geneticAlgorithm();
-    s1.print();
-    //s2.print();
+
+    GeneticAlgorithm* GA = new GeneticAlgorithm();
+    GA->optimize_solution();
+    Solution* sGA = GA->get_best();
+    sGA->print();
+    
+    SimulatedAnnealing* SA = new SimulatedAnnealing();
+    SA->optimize_solution();
+    Solution* sSA = SA->get_best();
+    sSA->print();
 }

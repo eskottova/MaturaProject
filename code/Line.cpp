@@ -106,14 +106,11 @@ void Solution::Line::set_stations(vector<Station*> stations, int time)
     this->sol->out_events.push_back(new Solution::OutEvent(time, this->id, 'r', other));
 }
 
-void Solution::Line::add_trains(int time)
+int Solution::Line::get_val()
 {
-    this->trains = this->sol->new_trains;
-    for(auto train : this->sol->new_trains) 
-    {
-        train->set_line(this, this->stations[0], time);
-    }
-    this->sol->new_trains.clear();
+    if(this->change) return 0;
+    else if(this->trains.size() > 0) return this->stations.size() * 1000 / this->trains.size();
+    else return this->sol->active_stations.size() * 1000;
 }
 
 bool Solution::Line::contains(int station_type)
@@ -122,3 +119,19 @@ bool Solution::Line::contains(int station_type)
     for(Station* s : this->stations) poss |= s->type == station_type;
     return poss;
 }
+
+void Solution::Line::add_train(Train* train)
+{
+    this->trains.push_back(train);
+}
+
+/*vector<Solution::Station*> Solution::Line::find_stations()
+{
+    vector<Station*> lstations;
+    for(auto s : this->sol->active_stations)
+    {
+        int val = s->new_line_score() + lstations.size() * this->sol->para->pars[11];
+        if(val > 0) lstations.push_back(s);
+    }
+    return lstations;
+}*/

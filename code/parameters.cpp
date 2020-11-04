@@ -1,6 +1,7 @@
 #include <vector>
 #include "Parameters.hpp"
 #include "random_generator.hpp"
+#include <iostream>
 
 Parameters::Parameters()
 {

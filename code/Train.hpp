@@ -14,12 +14,13 @@ class Solution::Train
         Solution* sol;
         int id;
         int time;
+        bool change;
         vector<Solution::Passenger*> passengers;
         Solution::Line* line;
         Solution::Station* station;
     public:
         Train(Solution* sol, int id, int time);
-        void unboard(Station* station, int time);
+        bool unboard(Station* station, int time);
         int get_cap();
         void set_line(Line* line, Station* station, int time);
         void set_station(Station* station);
@@ -28,5 +29,8 @@ class Solution::Train
         void add_pass(Passenger* p);
         bool line_contains(int station_type);
         void reset(Solution* sol);
+        void find_line(int time);
+        /* bool get_change(){return this->change;}
+        void check_change();*/
 };
 #endif

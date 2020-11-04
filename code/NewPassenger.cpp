@@ -16,6 +16,5 @@ Solution::NewPassenger::NewPassenger(Solution* sol, Passenger* passenger, Statio
 bool Solution::NewPassenger::run()
 {
     this->passenger->reset(this->sol);
-    this->sol->last_action = this->time;
     return this->station->add_passenger(this->passenger);
 }

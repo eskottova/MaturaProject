@@ -61,9 +61,9 @@ class Input
             for(int i = 0; i < n; i ++)
             {
                 int e_type = uni(rng) % event_c[4]; // random event type
-                if(i < 3) e_type = 0;
-                else if(i == 3) e_type = event_c[3];
-                else if(i == 4) e_type = event_c[4];
+                if(i < 3) e_type = 0; // stations
+                else if(i == 3) e_type = event_c[3]; // line
+                else if(i == 4) e_type = event_c[4]; // train
                 int j = 0;
                 while(e_type > event_c[j + 1]) j ++; // find type
 
@@ -139,10 +139,10 @@ class Input
         }
 };
 
-signed main()
+signed main(signed argc, char** argv)
 {
-    int n = 2000, seed = 10007;
-    //cin >> n >> seed;
+    int n = 4000, seed;
+    seed = stoi(argv[1]);
     Input in(n, seed);
     return 0;
 }

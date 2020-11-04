@@ -32,5 +32,7 @@ class Solution::Station
         int get_id(){return this->id;}
         std::pair<int, int> get_coordinates(){return {this->x, this->y};}
         void reset(Solution* sol);
+        int num_lines_type(int type);
+        int new_line_score();
 };
 #endif

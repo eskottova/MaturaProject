@@ -19,19 +19,32 @@ void Solution::Train::reset(Solution* sol)
     this->passengers.clear();
     this->line = nullptr;
     this->station = nullptr;
+    this->change = false;
 }
 
-void Solution::Train::unboard(Solution::Station* station, int time)
+bool Solution::Train::unboard(Solution::Station* station, int time)
 {
     for(auto it = passengers.begin(); it != passengers.end(); it ++)
     {
-        if((*it)->check_exit(station))
+        int exit_state = (*it)->check_exit(station, this->change);
+        if(exit_state > 0)
         {
             this->sol->out_events.push_back(new Solution::OutEvent(time, (*it)->get_id(), 'a', {station->get_id()}));
+            if(exit_state == 1) station->add_passenger((*it));
+            else
+            {
+                this->sol->pass_finished ++;
+                this->sol->last_pass = time;
+            }
             it = passengers.erase(it) - 1;
-            this->sol->last_action = time;
         }
     }
+    if(change && this->passengers.size() == 0)
+    {
+        this->find_line(time);
+        this->change = false;
+    }
+    return (station->get_cap() < 0);
 }
 
 void Solution::Train::add_pass(Passenger* p)
@@ -66,3 +79,24 @@ bool Solution::Train::line_contains(int station_type)
 {
     return this->line->contains(station_type);
 }
+
+void Solution::Train::find_line(int time)
+{
+    Line* ans_line;
+    int ans_val = 0;
+    for(auto line : this->sol->active_lines)
+    {
+        if(line->get_val() > ans_val)
+        {
+            ans_val = line->get_val();
+            ans_line = line;
+        }
+    }
+    this->set_line(ans_line, ans_line->get_start(), time);
+    ans_line->add_train(this);
+}
+
+/* void Solution::Train::check_change()
+{
+    this->change = this->line->get_change();
+}*/

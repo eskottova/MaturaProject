@@ -12,6 +12,5 @@ Solution::TrainArrival::TrainArrival(Solution* sol, int time, Train* train, Stat
 bool Solution::TrainArrival::run()
 {
     this->train->set_station(this->station);
-    this->train->unboard(this->station, this->time);
-    return false;
+    return this->train->unboard(this->station, this->time);
 }

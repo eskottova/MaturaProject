@@ -10,33 +10,29 @@
 Solution::Solution() : events(compare)
 {
     this->para = new Parameters();
-    this->para->pars = {-1, -1};
     this->input = new Input(this);
 }
 
 Solution::Solution(Input* input, Parameters* para) : events(compare)
 {
-    std::vector<Solution::Station*> new_stations;
-    std::vector<Solution::Station*> stations;
     this->para = para;
     this->input = input;
     this->input->set_sol(this);
     for(auto e : this->input->input_events) this->events.push(e);
-    this->last_action = 0;
-    this->overfilled = false;
-    this->steps = 0;
-    while(!this->overfilled && !this->events.empty() && this->steps < this->last_action + 2000)
+
+    std::cerr << "Solution: ";
+    for(int p : this->para->pars) std::cerr << p << " ";
+    std::cerr << "\n";
+
+    while(!this->overfilled && !this->events.empty() && this->time < this->last_pass + 1000)
     {
         Solution::Event* e = this->events.top();
         this->events.pop();
-        this->steps = e->get_time();
+        this->time = e->get_time();
         this->overfilled = e->run();
     }
-
-    this->pass_finished = 0;
-    for(auto oe : this->out_events) if(oe->get_type() == 'a') this->pass_finished ++;
-
-    this->val = this->pass_finished * 10000 - this->steps;
+    std::cerr << this->pass_finished << " " << this->last_pass << "\n";
+    this->val = this->pass_finished * 1000 - this->last_pass;
 }
 
 Parameters* Solution::neighbor()
@@ -54,4 +50,15 @@ void Solution::print()
     {
         oe->print();
     }
+}
+
+void Solution::print_result()
+{
+    cout << this->pass_finished << " " << this->last_pass << '\n';
+}
+
+void Solution::print_pars()
+{
+    for(int p : this->para->pars) cout << p << " ";
+    cout << "\n";
 }

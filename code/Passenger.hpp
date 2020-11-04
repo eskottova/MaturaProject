@@ -16,7 +16,7 @@ class Solution::Passenger
         Line* line;
     public:
         Passenger(Solution* sol, int id, int time, int start_station_id, int end_station_type);
-        bool check_exit(Station* stat);
+        int check_exit(Station* stat, bool change);
         bool check_boarding(Train* train);
         int get_id(){return this->id;}
         void reset(Solution* sol);  

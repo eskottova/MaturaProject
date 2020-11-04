@@ -27,7 +27,8 @@ class Solution
         Solution();
         void print();
         bool operator<(Solution const& s) {return this->val < s.val;}
-        int last_action;
+        void print_pars();
+        void print_result();
     private:
         class Station;
         class Passenger;
@@ -44,18 +45,19 @@ class Solution
 
         class OutEvent;
 
+        int last_change = 0;
         int pass_finished = 0;
-        int steps = 0;
-        bool overfilled;
+        int time = 0;
+        int last_pass = 0;
+        bool overfilled = false;
         Input* input;
-        Line* last_line;
         Parameters* para;
         vector<Solution::Station*> new_stations;
-        vector<Solution::Train*> new_trains;
         std::priority_queue<Solution::Event*, vector<Solution::Event*>, decltype(compare)> events;
         vector<Solution::OutEvent*> out_events;
-        vector<Solution::Station*> stations;
         vector<Solution::Station*> all_stations;
+        vector<Solution::Line*> active_lines;
+        vector<Solution::Station*> active_stations;
 };
 
 #endif 

@@ -17,11 +17,11 @@ class Solution::Line
         vector<Station*> stations;
         vector<Train*> trains;
         int dist(Station* s1, Station* s2);        
+        bool change = false;
     public:
         Line(Solution* sol, int id, int time);
         std::pair<int, Station*> next_station(Station* s0);
         void set_stations(vector<Station*>, int time);
-        void add_trains(int time);
         int get_id(){return this->id;}
         Station* get_start(){return this->stations[0];}
         bool contains(int station_type);
@@ -29,5 +29,10 @@ class Solution::Line
         void best_swap(vector<Station*>& line);
         vector<Station*> find_order(vector<Station*> stations);
         void reset(Solution* sol);
+        int get_val();
+        void add_train(Train* train);
+        //bool get_change(){return this->change;}
+        //vector<Station*> find_stations();
+        //void start_change();
 };
 #endif

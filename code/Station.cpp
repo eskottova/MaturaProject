@@ -29,7 +29,6 @@ void Solution::Station::board(Train* train, int time)
             train->add_pass(*it);
             this->sol->out_events.push_back(new Solution::OutEvent(time, (*it)->get_id(), 'e', {train->get_id()}));
             it = passengers.erase(it) - 1;
-            this->sol->last_action = time;
         }
     }
 }
@@ -37,7 +36,7 @@ void Solution::Station::board(Train* train, int time)
 bool Solution::Station::add_passenger(Passenger* passenger)
 {
     this->passengers.push_back(passenger);
-    return this->passengers.size() > this->sol->input->station_passengers;
+    return (this->passengers.size() > this->sol->input->station_passengers);
 }
 
 int Solution::Station::add_line(Line* line)
@@ -49,4 +48,16 @@ int Solution::Station::add_line(Line* line)
 int Solution::Station::get_cap()
 {
     return this->sol->input->station_passengers - this->passengers.size();
+}
+
+int Solution::Station::num_lines_type(int type)
+{
+    int ans = 0;
+    for(auto l : this->lines) ans += l->contains(type);
+    return ans;
+}
+
+int Solution::Station::new_line_score()
+{
+    return (this->lines.size() == 0) * this->sol->para->pars[9] + this->passengers.size() * this->sol->para->pars[10];
 }

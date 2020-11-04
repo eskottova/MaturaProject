@@ -3,6 +3,7 @@
 #include "Parameters.hpp"
 #include "Solution.hpp"
 #include "Input.hpp"
+#include <algorithm>
 
 Solution::Passenger::Passenger(Solution* sol, int id, int time, int start_station_id, int end_station_type)
 {
@@ -23,20 +24,24 @@ void Solution::Passenger::reset(Solution* sol)
 }
 
 
-bool Solution::Passenger::check_exit(Station* stat)
+int Solution::Passenger::check_exit(Station* stat, bool change)
 {
-    if(stat->type == end_station_type) 
+    vector<int>& par = this->sol->para->pars;
+    int val = par[4] * stat->get_cap() + par[5] * this->train->get_cap() + this->train->line_contains(this->end_station_type) * par[6] + (stat->num_lines_type(this->end_station_type) > this->train->line_contains(this->end_station_type)) * par[7];
+    if(stat->type == end_station_type || ((val > 0) && stat->get_cap() > 0)) 
     {
         train = nullptr;
         station = stat;
-        return true;
+        return 1 + (stat->type == this->end_station_type);
     }
-    return false;
+    return 0;
 }
 
 bool Solution::Passenger::check_boarding(Train* tra)
 {
-    if((tra->line_contains(this->end_station_type) && tra->get_cap() > 0) && this->sol->para->pars[0] * this->station->get_cap() < this->sol->para->pars[1] * tra->get_cap())
+    vector<int>& par = this->sol->para->pars;
+    int val = par[0] * this->station->get_cap() + par[1] * tra->get_cap() + tra->line_contains(this->end_station_type) * par[2]+ (this->station->num_lines_type(this->end_station_type) > tra->line_contains(this->end_station_type)) * par[3];
+    if(tra->get_cap() > 0 && val > 0)
     {
         this->train = tra;
         this->station = nullptr;

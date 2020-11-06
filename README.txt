@@ -1,9 +1,12 @@
+Requirements: g++ compiler
+
 (1) Create an input file
 
 	(a) Go to the directory where 'input_generator.cpp' is stored
 	(b) Run 'g++ input_generator.cpp -o input_generator' in the terminal
-	(c) Run './input_generator > input.txt' in the terminal
-	Now a file named 'input_generator.cpp' has been created in the directory.
+	(c) Run './input_generator num > input.txt' in the terminal
+		('num' could be any positive integer)
+	Now a file named 'input.txt' has been created in the directory.
 
 
 (2) Create an output file

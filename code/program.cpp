@@ -5,6 +5,7 @@
 #include "GeneticAlgorithm.hpp"
 #include "Solution.hpp"
 
+
 class Event;
 
 signed main()
@@ -13,9 +14,7 @@ signed main()
     bool one_sol = false;
     Solution* input_solution = new Solution();
 
-    
-    // single solution testing
-    if(one_sol)
+    if(one_sol) // single solution testing
     {
         Parameters* test_pars = new Parameters();
         test_pars->pars = {-8, 44, 305, 494, 34, 33, -965, 291};
@@ -37,14 +36,8 @@ signed main()
         Solution* sGA = GA->get_best();
 
         
-        sSA->print_result();
-        sGA->print_result();
-
-        sSA->print_pars();
-        sGA->print_pars();
-        //sSA->print();
-        //sGA->print();
+        if(sSA > sGA) sSA->print();
+        else sGA->print();
     }
     
-
 }

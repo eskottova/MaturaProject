@@ -83,8 +83,11 @@ void GeneticAlgorithm::compute_offspring(vector<Parameters*> offspring_pars)
     int i = 0;
     while(i < num_replaced && population[i] < offspring[this->num_offspring - 1 - i])
     {
+        delete population[i];
         population[i] = offspring[this->num_offspring - i - 1];
+        i++;
     }
+    for(;i < num_offspring; i++) delete offspring[this->num_offspring - i - 1];
 }
 
 void GeneticAlgorithm::optimize_solution(Solution::Input* input)

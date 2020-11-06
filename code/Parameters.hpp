@@ -15,11 +15,12 @@ PARAMETER DESCRIPTIONS:
     5: free space on train (leaving train)
     6: train line contains correct end station (leaving train)
     7: station has other line with correct end station (leaving train)
-    No line changes for now
-    8: wait between line changes
-    9: new station (finding stations for new line)
-    10: number of passengers at station (finding stations for new line)
-    11: number of stations already chosen for line (finding stations for new line)
+    
+    No line changes for now:
+        8: wait between line changes
+        9: new station (finding stations for new line)
+        10: number of passengers at station (finding stations for new line)
+        11: number of stations already chosen for line (finding stations for new line)
 
 */
 

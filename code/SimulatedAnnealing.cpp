@@ -9,9 +9,6 @@ void SimulatedAnnealing::optimize_solution(Solution::Input* input)
 {
     this->input = input;
     Parameters* para = new Parameters();
-    std::cerr << "para print ";
-    for(int i : para->pars) std::cerr << i << " ";
-    std::cerr << "\n";
     Solution* cursol = new Solution(this->input, para);
     this->bests = cursol;
     int temp = this->init_temp;
@@ -24,7 +21,16 @@ void SimulatedAnnealing::optimize_solution(Solution::Input* input)
             {
                 cursol = snew;
             }
-            if(cursol->val > bests->val) this->bests = cursol;
+            else
+            {
+                delete snew;
+            }
+            
+            if(cursol->val > bests->val)
+            {
+                delete this->bests;
+                this->bests = cursol;
+            }
         }
         temp -= this->alpha;
     }

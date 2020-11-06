@@ -2,7 +2,7 @@
 #define int int64_t
 
 // random generator
-std::mt19937 rng(1007);
+std::mt19937 rng(10009);
 std::uniform_int_distribution<int> uni(0, 1e12);
 
 signed randint(signed mi, signed ma)

@@ -15,14 +15,11 @@ Solution::Solution() : events(compare)
 
 Solution::Solution(Input* input, Parameters* para) : events(compare)
 {
+    std::cerr << "new solution\n";
     this->para = para;
     this->input = input;
     this->input->set_sol(this);
     for(auto e : this->input->input_events) this->events.push(e);
-
-    std::cerr << "Solution: ";
-    for(int p : this->para->pars) std::cerr << p << " ";
-    std::cerr << "\n";
 
     while(!this->overfilled && !this->events.empty() && this->time < this->last_pass + 1000)
     {
@@ -30,8 +27,8 @@ Solution::Solution(Input* input, Parameters* para) : events(compare)
         this->events.pop();
         this->time = e->get_time();
         this->overfilled = e->run();
+        if(e->get_prio() == 5 || e->get_prio() == 0) delete e;
     }
-    std::cerr << this->pass_finished << " " << this->last_pass << "\n";
     this->val = this->pass_finished * 1000 - this->last_pass;
 }
 

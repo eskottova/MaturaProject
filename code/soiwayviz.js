@@ -1,4 +1,4 @@
-/* JS File for visualization, provided by the SOI */
+/* JS File for visualization, provided by the Swiss Olympiad in Informatics, written by Benjamin Schmid */
 
 'use strict';
 
@@ -271,7 +271,11 @@ function soiwayviz_calc_frames() {
             pass.station = stations[ac[3]];
             pass.station.passengers.push(pass);
             if (pass.station.passengers.length > soiwayviz.consts[3]) {
-              boom("Station " + ac[3] + " is too full");
+              boom("Station " + ac[3] + " is too full " + pass.idx);
+              for(var i = 0; i < pass.station.passengers.length; i ++)
+              {
+                boom(pass.station.passengers[i].idx);
+              }
             }
           }
           break;

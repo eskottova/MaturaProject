@@ -1,3 +1,19 @@
+------------ GENERAL INFORMATION ------------
+
+
+Git repository for my matura project. 
+
+The idea was to use simulated annealing and genetic algorithms to optimize a train network. 
+
+code: here you can find all the code that was written for the project as well as the visualization of the train network
+
+latex: everything related to the written part of the project
+
+
+------------ RUNNING THE PROGRAMS ------------
+
+
+
 Requirements: g++ compiler
 
 (1) Create an input file
